@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto pt-8 animate-slide-up">
+    <!-- Header Summary -->
+    <div class="glass p-8 mb-8 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1" style="background: linear-gradient(90deg, #FF6B6B, #FFB347, #4ECDC4, #6C63FF);"></div>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded" style="color: #FF6B6B; background: rgba(255,107,107,0.1);">Syllabus Active</span>
+                <h1 class="text-3xl font-bold font-heading mt-2 mb-1">{{ syllabus.topic_title }}</h1>
+                <p class="text-[#9B96B0] text-sm flex items-center gap-4">
+                    <span><i class="fas fa-book-open mr-1"></i> {{ syllabus.subject_domain }}</span>
+                    <span><i class="fas fa-signal mr-1"></i> {{ syllabus.overall_difficulty|capitalize }}</span>
+                </p>
+            </div>
+            
+            <div class="flex gap-6 items-center">
+                <div class="text-center">
+                    <p class="text-[10px] font-bold uppercase" style="color: #5E5877;">Chapters</p>
+                    <p class="text-xl font-bold font-heading">{{ progress.keys()|length }}<span class="text-[#5E5877] text-sm mx-1">/</span>{{ syllabus.chapters|length }}</p>
+                </div>
+                <div class="w-px h-10" style="background: rgba(255,255,255,0.06);"></div>
+                <div class="text-center">
+                    <p class="text-[10px] font-bold uppercase" style="color: #5E5877;">Total XP</p>
+                    <p class="text-xl font-bold font-heading" style="color: #FFB347;">⚡ {{ total_xp }}</p>
+                </div>
+                <div class="w-px h-10" style="background: rgba(255,255,255,0.06);"></div>
+                <div class="arcs-strip !mb-0 !gap-1.5">
+                    <div class="arcs-item active" title="Attention">A</div>
+                    <div class="arcs-item" title="Relevance">R</div>
+                    <div class="arcs-item" title="Confidence">C</div>
+                    <div class="arcs-item" title="Satisfaction">S</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chapter Grid -->
+    <div class="grid md:grid-cols-2 gap-5 pb-16">
+        {% for chapter in syllabus.chapters %}
+            {% set c_id = chapter.id|string %}
+            {% set is_unlocked = (loop.first or progress.get((chapter.id - 1)|string, {}).get('completed')) %}
+            {% set is_completed = progress.get(c_id, {}).get('completed') %}
+
+            <div class="chapter-card glass p-6 relative transition-all duration-300 flex flex-col
+                {% if is_completed %}chapter-completed
+                {% elif is_unlocked %}chapter-unlocked group hover:border-white/15
+                {% else %}chapter-locked{% endif %}"
+                style="{% if is_completed %}border-color: rgba(46,213,115,0.2);{% elif is_unlocked %}border-color: rgba(108,99,255,0.15);{% else %}opacity: 0.45; pointer-events: none;{% endif %}"
+                id="chapter-card-{{ chapter.id }}">
+                
+                <!-- Top row: chapter number + meta -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold font-heading flex-shrink-0"
+                             style="{% if is_completed %}background: rgba(46,213,115,0.12); color: #2ED573; border: 1px solid rgba(46,213,115,0.2);{% elif is_unlocked %}background: rgba(108,99,255,0.08); color: #6C63FF; border: 1px solid rgba(108,99,255,0.15);{% else %}background: rgba(255,255,255,0.04); color: #5E5877; border: 1px solid rgba(255,255,255,0.06);{% endif %}">
+                            {% if is_completed %}
+                                <i class="fas fa-check"></i>
+                            {% elif not is_unlocked %}
+                                <i class="fas fa-lock text-[10px]"></i>
+                            {% else %}
+                                {{ "%02d"|format(chapter.id) }}
+                            {% endif %}
+                        </div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider"
+                              style="{% if chapter.difficulty == 'beginner' %}color: #2ED573;{% elif chapter.difficulty == 'intermediate' %}color: #FFB347;{% else %}color: #FF6B6B;{% endif %}">
+                            {{ chapter.difficulty }}
+                        </span>
+                    </div>
+                    <span class="text-[10px] flex items-center gap-1" style="color: #5E5877;">
+                        <i class="far fa-clock"></i> {{ chapter.estimated_minutes }}m
+                    </span>
+                </div>
+
+                <!-- Title & subtitle -->
+                <h3 class="text-lg font-bold font-heading leading-snug mb-1.5">{{ chapter.title }}</h3>
+                <p class="text-xs leading-relaxed mb-4 flex-1" style="color: #9B96B0;">{{ chapter.subtitle }}</p>
+
+                <!-- Concept tags -->
+                <div class="flex gap-1.5 flex-wrap mb-5">
+                    {% for concept in chapter.key_concepts[:4] %}
+                        <span class="text-[9px] px-2 py-0.5 rounded-md" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.05); color: #5E5877;">{{ concept }}</span>
+                    {% endfor %}
+                    {% if chapter.key_concepts|length > 4 %}
+                        <span class="text-[9px] px-2 py-0.5 rounded-md" style="color: #5E5877;">+{{ chapter.key_concepts|length - 4 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Action row -->
+                <div class="flex items-center gap-3 mt-auto">
+                    {% if is_unlocked %}
+                        <button onclick="startChapter({{ chapter.id }})" 
+                                class="flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 text-center"
+                                style="{% if is_completed %}background: rgba(46,213,115,0.08); border: 1px solid rgba(46,213,115,0.15); color: #2ED573;{% else %}background: linear-gradient(135deg, #FF6B6B, #FF8E53); border: 1px solid rgba(255,107,107,0.3); color: white;{% endif %}"
+                                id="start-btn-{{ chapter.id }}">
+                            {% if is_completed %}
+                                <i class="fas fa-redo-alt mr-1.5 text-xs"></i> Review
+                            {% else %}
+                                Start Learning <i class="fas fa-arrow-right ml-1.5 text-xs"></i>
+                            {% endif %}
+                        </button>
+                        {% if is_completed %}
+                            <div class="px-3 py-2.5 rounded-xl text-xs font-bold text-center" style="border: 1px solid rgba(46,213,115,0.12); color: #2ED573; min-width: 52px;">
+                                {{ progress[c_id].quiz_score }}%
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="flex-1 py-2.5 text-center text-xs font-bold rounded-xl" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); color: #5E5877;">
+                            <i class="fas fa-lock mr-1.5 text-[10px]"></i> Complete Previous
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        async function startChapter(chapterId) {
+            const loader = document.getElementById('chapter-loader');
+            const progressBar = document.getElementById('generation-progress-bar');
+            const progressText = document.getElementById('generation-progress-text');
+            const statusMessage = document.getElementById('generation-status');
+            const btn = document.getElementById(`start-btn-${chapterId}`);
+            
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Loading...';
+            }
+            
+            loader.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+            statusMessage.textContent = 'Initializing chapter generation...';
+            
+            let simulatedProgress = 0;
+            const progressInterval = setInterval(() => {
+                if (simulatedProgress < 85) {
+                    simulatedProgress += Math.random() * 30;
+                    if (simulatedProgress > 85) simulatedProgress = 85;
+                    progressBar.style.width = simulatedProgress + '%';
+                    progressText.textContent = Math.round(simulatedProgress) + '%';
+                }
+            }, 300);
+            
+            try {
+                statusMessage.textContent = 'Preparing personalized content...';
+                progressBar.style.width = '10%';
+                progressText.textContent = '10%';
+                
+                const response = await fetch(`/api/generate-chapter/${chapterId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                clearInterval(progressInterval);
+                statusMessage.textContent = 'Finalizing chapter...';
+                progressBar.style.width = '90%';
+                progressText.textContent = '90%';
+                
+                const result = await response.json();
+                
+                if (result.status === 'success' || result.status === 'cached') {
+                    statusMessage.textContent = '✓ Chapter ready!';
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    window.location.href = `/learn/${chapterId}`;
+                } else {
+                    clearInterval(progressInterval);
+                    alert(`Error: ${result.error || 'Failed to generate chapter'}`);
+                    loader.classList.add('hidden');
+                    if (btn) { btn.disabled = false; btn.innerHTML = 'Start Learning <i class="fas fa-arrow-right ml-1.5 text-xs"></i>'; }
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Chapter generation error:', error);
+                alert('Error generating chapter: ' + error.message);
+                loader.classList.add('hidden');
+                if (btn) { btn.disabled = false; btn.innerHTML = 'Start Learning <i class="fas fa-arrow-right ml-1.5 text-xs"></i>'; }
+            }
+        }
+    </script>
+</div>
+
+<!-- Loading Overlay -->
+<div id="chapter-loader" class="fixed inset-0 bg-black/80 z-[1000] hidden flex flex-col items-center justify-center backdrop-blur-sm">
+    <div class="w-full max-w-sm px-8">
+        <div class="flex justify-center mb-8">
+            <div class="relative w-20 h-20">
+                <div class="absolute inset-0 rounded-full" style="border: 3px solid rgba(108,99,255,0.15);"></div>
+                <div class="absolute inset-0 rounded-full animate-spin" style="border: 3px solid transparent; border-top-color: #4ECDC4;"></div>
+                <div class="absolute inset-2 flex items-center justify-center text-2xl">📚</div>
+            </div>
+        </div>
+        
+        <p id="generation-status" class="text-lg font-bold text-white text-center mb-6">Initializing chapter generation...</p>
+        
+        <div class="w-full rounded-full overflow-hidden h-2 mb-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);">
+            <div id="generation-progress-bar" class="h-full transition-all duration-300" style="width: 0%; background: linear-gradient(90deg, #FF6B6B, #FFB347, #4ECDC4);"></div>
+        </div>
+        
+        <p id="generation-progress-text" class="text-center text-sm font-bold" style="color: #9B96B0;">0%</p>
+        
+        <div class="mt-6 space-y-2">
+            <div class="flex items-center gap-3 text-xs" style="color: #9B96B0;">
+                <div class="w-2 h-2 rounded-full" style="background: rgba(255,107,107,0.4);"></div>
+                <span>Analyzing source material</span>
+            </div>
+            <div class="flex items-center gap-3 text-xs" style="color: #9B96B0;">
+                <div class="w-2 h-2 rounded-full" style="background: rgba(78,205,196,0.4);"></div>
+                <span>Personalizing content</span>
+            </div>
+            <div class="flex items-center gap-3 text-xs" style="color: #9B96B0;">
+                <div class="w-2 h-2 rounded-full" style="background: rgba(255,179,71,0.4);"></div>
+                <span>Generating comprehensive lecture</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

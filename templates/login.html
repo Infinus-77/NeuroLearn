@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto pt-12 md:pt-16 animate-slide-up">
+    <!-- Header -->
+    <div class="text-center mb-10">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg"
+             style="background: linear-gradient(135deg, #4ECDC4, #6C63FF); box-shadow: 0 0 40px rgba(78,205,196,0.2);">
+            <i class="fas fa-sign-in-alt text-3xl text-white"></i>
+        </div>
+        <h1 class="text-3xl font-bold font-heading mb-2">Welcome Back</h1>
+        <p class="text-[#9B96B0] text-sm">Sign in to continue your learning journey</p>
+    </div>
+
+    <!-- Error Message -->
+    {% if error %}
+    <div class="glass p-4 mb-6 rounded-xl" style="border-color: rgba(255,71,87,0.2); background: rgba(255,71,87,0.06);">
+        <p class="text-sm flex items-center gap-2" style="color: #FF4757;">
+            <i class="fas fa-exclamation-circle text-xs"></i> {{ error }}
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Login Form -->
+    <form method="POST" action="/login" class="glass p-8 space-y-6 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1" style="background: linear-gradient(90deg, #4ECDC4, #6C63FF, #FFB347);"></div>
+
+        <!-- Username or Email -->
+        <div class="space-y-2">
+            <label class="text-xs font-bold uppercase tracking-widest text-[#9B96B0]" for="login-id">Username or Email</label>
+            <input type="text" name="login_id" id="login-id" value="{{ login_id }}" required
+                   class="w-full rounded-xl px-4 py-3 outline-none transition-colors text-white placeholder-white/30"
+                   style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
+                   onfocus="this.style.borderColor='#4ECDC4'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'"
+                   placeholder="Enter your username or email" autofocus>
+        </div>
+
+        <!-- Password -->
+        <div class="space-y-2">
+            <label class="text-xs font-bold uppercase tracking-widest text-[#9B96B0]" for="login-password">Password</label>
+            <div class="relative">
+                <input type="password" name="password" id="login-password" required
+                       class="w-full rounded-xl px-4 py-3 outline-none transition-colors text-white placeholder-white/30 pr-12"
+                       style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
+                       onfocus="this.style.borderColor='#4ECDC4'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'"
+                       placeholder="Enter your password">
+                <button type="button" onclick="togglePassword('login-password', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" id="login-submit-btn" class="btn-primary w-full py-4 text-lg mt-4">
+            <i class="fas fa-arrow-right mr-2"></i> Sign In
+        </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="flex items-center gap-4 my-8">
+        <div class="flex-1 h-px" style="background: rgba(255,255,255,0.07);"></div>
+        <span class="text-xs font-bold" style="color: #5E5877;">OR</span>
+        <div class="flex-1 h-px" style="background: rgba(255,255,255,0.07);"></div>
+    </div>
+
+    <!-- Guest Mode -->
+    <a href="/" class="block glass p-4 text-center hover:bg-white/5 transition-colors group">
+        <p class="text-sm text-[#9B96B0] group-hover:text-white transition-colors">
+            <i class="fas fa-user-secret mr-2 text-white/30"></i> Continue as Guest
+            <span class="text-xs block mt-1" style="color: #5E5877;">(Progress won't be saved)</span>
+        </p>
+    </a>
+
+    <!-- Signup Link -->
+    <div class="text-center mt-8 mb-16">
+        <p class="text-[#9B96B0] text-sm">Don't have an account?
+            <a href="/signup" class="font-semibold hover:text-white transition-colors" style="color: #4ECDC4;"> Create Account →</a>
+        </p>
+    </div>
+</div>
+
+<style>
+    input:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 30px #110e1c inset !important;
+        -webkit-text-fill-color: #EEEDF5 !important;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+</script>
+{% endblock %}

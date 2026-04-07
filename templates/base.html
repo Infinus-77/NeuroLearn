@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroLearn AI — Every Mind Learns Differently</title>
+    <meta name="description" content="NeuroLearn AI adapts to every mind. Personalized, neuro-informed learning for ADHD, Dyslexia, and more.">
+    
+    <!-- Fonts -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        coral: '#E8505B',
+                        amber: '#F0A030',
+                        indigo: '#5B52E0',
+                        teal: '#2DB5A8',
+                        rose: '#E8505B',
+                        emerald: '#27AE60',
+                        gold: '#F0A030',
+                        lavender: '#8B7FE8',
+                        violet: '#5B52E0',
+                        cyan: '#2DB5A8',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- External Utilities -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+    
+    <!-- Theme & Accessibility Init -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('neurolearn_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            const settings = JSON.parse(localStorage.getItem('neurolearn_accessibility') || '{}');
+            if (settings.high_contrast) document.documentElement.classList.add('high-contrast');
+            if (settings.reduce_motion) document.documentElement.classList.add('reduce-motion');
+            if (settings.font_scale) document.documentElement.style.setProperty('--font-scale', settings.font_scale);
+        })();
+    </script>
+
+    <!-- NeuroLearn Profile Injection for Accessibility Engine -->
+    <script>
+    window.NEURO_PROFILE = {{ session.get('learning_profile', {}) | tojson | safe }};
+    </script>
+    <script src="{{ url_for('static', filename='js/accessibility_engine.js') }}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.NEURO_PROFILE && Object.keys(window.NEURO_PROFILE).length > 0) {
+            const engine = new AccessibilityEngine(window.NEURO_PROFILE);
+            engine.init();
+        }
+    });
+    </script>
+</head>
+<body class="min-h-screen" style="background-color: var(--bg-primary); color: var(--text-primary);">
+
+    <!-- Navigation Header -->
+    <nav class="sticky top-0 z-50 m-3 md:m-4 px-5 md:px-6 py-3 md:py-4 flex items-center justify-between"
+         style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 14px; box-shadow: var(--shadow-sm);">
+        <a href="/" class="text-xl md:text-2xl font-bold font-heading tracking-tighter flex items-center gap-2" id="nav-logo">
+            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-white"
+                  style="background: var(--indigo);">
+                <i class="fas fa-brain"></i>
+            </span>
+            <span class="text-gradient">NEUROLEARN</span>
+        </a>
+        
+        <div class="flex items-center gap-3 md:gap-4">
+            <!-- Theme Toggle -->
+            <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+
+            {% if session.get('user_id') %}
+                {% if session.get('student_name') %}
+                    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg" style="background: var(--bg-tertiary); border: 1px solid var(--border-glass);">
+                        <span class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--text-muted);">STUDENT</span>
+                        <span class="text-sm font-semibold">{{ session.get('display_name', session['student_name']) }}</span>
+                    </div>
+                {% endif %}
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style="background: var(--amber-glow); border: 1px solid rgba(240,160,48,0.15);">
+                    <i class="fas fa-bolt text-xs" style="color: var(--amber);"></i>
+                    <span class="text-xs font-bold" style="color: var(--amber);">{{ session.get('total_xp', 0) }} XP</span>
+                </div>
+                <a href="/dashboard" class="text-sm hover:opacity-80 transition-opacity font-medium" style="color: var(--indigo);" title="Dashboard" id="nav-dashboard">
+                    <i class="fas fa-th-large mr-1"></i><span class="hidden md:inline">Dashboard</span>
+                </a>
+                {% if session.get('user_type') == 'parent' %}
+                    <a href="/parent-dashboard" class="text-sm hover:opacity-80 transition-opacity" style="color: var(--text-secondary);" id="nav-parent-view">Parent View</a>
+                {% endif %}
+                <a href="/logout" class="text-sm hover:opacity-80 transition-opacity" style="color: var(--text-muted);" title="Sign Out" id="nav-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            {% elif session.get('student_name') %}
+                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg" style="background: var(--bg-tertiary); border: 1px solid var(--border-glass);">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--text-muted);">GUEST</span>
+                    <span class="text-sm font-semibold">{{ session['student_name'] }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style="background: var(--amber-glow); border: 1px solid rgba(240,160,48,0.15);">
+                    <i class="fas fa-bolt text-xs" style="color: var(--amber);"></i>
+                    <span class="text-xs font-bold" style="color: var(--amber);">{{ session.get('total_xp', 0) }} XP</span>
+                </div>
+                {% if session.get('user_type') == 'parent' %}
+                    <a href="/parent-dashboard" class="text-sm hover:opacity-80 transition-opacity" style="color: var(--text-secondary);" id="nav-parent-dash">Parent Dashboard</a>
+                {% endif %}
+                <a href="/signup" class="text-sm hover:opacity-80 transition-opacity font-medium" style="color: var(--indigo);" id="nav-save-progress">
+                    <i class="fas fa-user-plus mr-1"></i><span class="hidden md:inline">Save Progress</span>
+                </a>
+            {% else %}
+                <a href="/login" class="text-sm hover:opacity-80 transition-opacity font-medium" style="color: var(--text-secondary);" id="nav-signin">
+                    <i class="fas fa-sign-in-alt mr-1"></i> Sign In
+                </a>
+                <a href="/signup" class="px-4 py-2 text-xs font-bold rounded-lg text-white" id="nav-signup"
+                   style="background: var(--indigo); border: 1px solid var(--indigo);">
+                    <i class="fas fa-user-plus mr-1"></i> Sign Up
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 pb-20">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="glass p-4 mb-6 rounded-xl text-center animate-slide-up" style="border-color: rgba(232,80,91,0.2); background: var(--coral-glow);">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Accessibility Toolbar -->
+    <div id="accessibility-toolbar" class="fixed bottom-6 right-6 z-[1000]">
+        <div id="accessibility-panel" class="glass p-6 mb-4 w-72 shadow-2xl opacity-0 translate-y-4 pointer-events-none transition-all duration-300">
+            <h4 class="font-heading mb-4 text-center border-b pb-2 font-bold" style="border-color: var(--border-glass);">Accessibility</h4>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm" style="color: var(--text-secondary);">High Contrast</span>
+                    <button id="toggle-contrast" class="w-10 h-6 rounded-full relative transition-colors" style="background: var(--border-glass);">
+                        <div class="w-4 h-4 rounded-full absolute left-1 top-1 transition-transform" style="background: var(--text-secondary);"></div>
+                    </button>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm" style="color: var(--text-secondary);">Reduced Motion</span>
+                    <button id="toggle-motion" class="w-10 h-6 rounded-full relative transition-colors" style="background: var(--border-glass);">
+                        <div class="w-4 h-4 rounded-full absolute left-1 top-1 transition-transform" style="background: var(--text-secondary);"></div>
+                    </button>
+                </div>
+                
+                <div class="space-y-2">
+                    <span class="text-sm block text-center" style="color: var(--text-secondary);">Reading Support</span>
+                    <div class="flex justify-center gap-2">
+                        <button class="px-3 py-1 rounded border text-xs" style="background: var(--bg-tertiary); border-color: var(--border-glass);">A-</button>
+                        <button class="px-3 py-1 rounded border text-xs" style="background: var(--bg-tertiary); border-color: var(--border-glass);">Default</button>
+                        <button class="px-3 py-1 rounded border text-xs" style="background: var(--bg-tertiary); border-color: var(--border-glass);">A+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button id="acc-trigger" class="acc-btn" title="Accessibility Menu">
+            <i class="fas fa-universal-access text-lg"></i>
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        
+        function updateThemeIcon() {
+            const current = document.documentElement.getAttribute('data-theme');
+            themeIcon.className = current === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        updateThemeIcon();
+        
+        themeToggle.onclick = () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('neurolearn_theme', next);
+            updateThemeIcon();
+        };
+
+        // Accessibility Panel Toggle
+        const trigger = document.getElementById('acc-trigger');
+        const panel = document.getElementById('accessibility-panel');
+        trigger.onclick = () => {
+            panel.classList.toggle('opacity-0');
+            panel.classList.toggle('translate-y-4');
+            panel.classList.toggle('pointer-events-none');
+        };
+
+        // Contrast Toggle
+        const contrastBtn = document.getElementById('toggle-contrast');
+        contrastBtn.onclick = () => {
+            const isSet = document.documentElement.classList.toggle('high-contrast');
+            updateAccSetting('high_contrast', isSet);
+            contrastBtn.querySelector('div').style.transform = isSet ? 'translateX(1rem)' : 'translateX(0)';
+            contrastBtn.style.background = isSet ? 'var(--indigo)' : '';
+        };
+
+        function updateAccSetting(key, val) {
+            const settings = JSON.parse(localStorage.getItem('neurolearn_accessibility') || '{}');
+            settings[key] = val;
+            localStorage.setItem('neurolearn_accessibility', JSON.stringify(settings));
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

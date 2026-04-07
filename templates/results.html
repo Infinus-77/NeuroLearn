@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto pt-8 animate-slide-up">
+    <!-- ARCS Phase -->
+    <div class="arcs-strip mb-12">
+        <div class="arcs-item" title="Attention">A</div>
+        <div class="arcs-item" title="Relevance">R</div>
+        <div class="arcs-item" title="Confidence">C</div>
+        <div class="arcs-item active" title="Satisfaction">S</div>
+    </div>
+
+    <!-- Top Achievement Card -->
+    <div class="glass p-12 text-center relative overflow-hidden mb-12">
+        <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba(108,99,255,0.04), transparent);"></div>
+        
+        <div class="relative flex flex-col md:flex-row items-center justify-center gap-12">
+            <!-- Score Circle -->
+            <div class="relative w-48 h-48">
+                <svg class="w-full h-full transform -rotate-90">
+                    <circle cx="96" cy="96" r="88" stroke="rgba(255,255,255,0.03)" stroke-width="8" fill="transparent"></circle>
+                    <circle id="score-stroke" cx="96" cy="96" r="88" 
+                            stroke="{{ '#2ED573' if progress.quiz_score >= 70 else ('#FFB347' if progress.quiz_score >= 50 else '#FF4757') }}" 
+                            stroke-width="8" fill="transparent" stroke-dasharray="552.9" stroke-dashoffset="552.9" 
+                            class="transition-all duration-1500 cubic-bezier(0.4, 0, 0.2, 1)"></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-5xl font-bold font-heading" id="score-text">0</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest" style="color: #5E5877;">Mastery</span>
+                </div>
+            </div>
+
+            <!-- XP & Badge -->
+            <div class="flex flex-col items-center md:items-start gap-4">
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-bold" style="color: #FFB347;">⚡ +{{ progress.xp_earned }}</span>
+                    <span class="text-sm font-medium" style="color: #9B96B0;">XP EARNED</span>
+                </div>
+                <div class="glass px-8 py-6 rounded-2xl flex items-center gap-6 animate-pulse-glow"
+                     style="border-color: rgba(108,99,255,0.15); background: rgba(108,99,255,0.04);">
+                    <span class="text-6xl">{{ chapter.badge_emoji }}</span>
+                    <div class="text-left">
+                        <p class="text-[10px] font-bold uppercase tracking-widest" style="color: #6C63FF;">Unlocked Achievement</p>
+                        <h3 class="text-xl font-bold font-heading">{{ chapter.badge_name }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Matrix -->
+    <div class="grid md:grid-cols-2 gap-8 mb-12">
+        <div class="glass p-8">
+            <h4 class="text-xs font-bold uppercase tracking-widest mb-6 pb-2" style="color: #9B96B0; border-bottom: 1px solid rgba(255,255,255,0.04);">Topic Breakdown</h4>
+            <div class="space-y-6">
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-medium">
+                        <span>Quiz Accuracy</span>
+                        <span>{{ progress.quiz_score }}%</span>
+                    </div>
+                    <div class="h-1 rounded-full overflow-hidden" style="background: rgba(255,255,255,0.05);">
+                        <div class="h-full" style="width: {{ progress.quiz_score }}%; background: #2ED573;"></div>
+                    </div>
+                </div>
+                
+                <div class="p-4 mt-6 rounded-xl" style="background: rgba(78,205,196,0.04); border-left: 2px solid #4ECDC4;">
+                    <div class="text-xs font-bold italic mb-1" style="color: #4ECDC4;">🧠 AI Performance Tip</div>
+                    <p class="text-sm" style="color: #9B96B0;">{{ chapter.improvement_tip }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass p-8">
+            <h4 class="text-xs font-bold uppercase tracking-widest mb-6 pb-2" style="color: #9B96B0; border-bottom: 1px solid rgba(255,255,255,0.04);">Global Leaderboard</h4>
+            <div id="leaderboard-list" class="space-y-3">
+                <div class="flex items-center justify-center p-8">
+                    <div class="w-6 h-6 rounded-full animate-spin" style="border: 2px solid rgba(108,99,255,0.15); border-top-color: #6C63FF;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DNA Card Section -->
+    <div class="glass p-8 mb-12">
+        <h4 class="text-xs font-bold uppercase tracking-widest mb-6 pb-2" style="color: #9B96B0; border-bottom: 1px solid rgba(255,255,255,0.04);">Your Learning DNA</h4>
+        <div class="flex flex-col items-center gap-6">
+            <p class="text-sm text-center" style="color: #9B96B0;">Your unique learning fingerprint — a visual snapshot of how you learn.</p>
+            <canvas id="dna-card-canvas" class="w-full max-w-[480px] rounded-xl" style="display:none; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.3);"></canvas>
+            <div id="dna-card-actions" class="flex gap-4">
+                <button id="btn-gen-dna" class="btn-primary px-6 py-3 text-sm">
+                    <i class="fas fa-dna mr-2"></i> Generate DNA Card
+                </button>
+                <button id="btn-download-dna" class="btn-secondary px-6 py-3 text-sm" style="display:none;">
+                    <i class="fas fa-download mr-2"></i> Download
+                </button>
+            </div>
+            <div id="dna-card-loading" class="hidden text-center">
+                <div class="w-6 h-6 rounded-full animate-spin inline-block mb-2" style="border: 2px solid rgba(108,99,255,0.15); border-top-color: #6C63FF;"></div>
+                <p class="text-xs" style="color: #5E5877;">Generating your learning fingerprint...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="flex flex-col md:flex-row items-center justify-center gap-6 pt-12 pb-24" style="border-top: 1px solid rgba(255,255,255,0.04);">
+        <button id="btn-share" class="btn-secondary px-8 py-4 w-full md:w-auto">
+            <i class="fas fa-share-alt mr-2"></i> Share Card
+        </button>
+        <a href="/chapters" class="btn-primary px-12 py-4 w-full md:w-auto text-lg" style="box-shadow: var(--shadow-coral);">
+            Return to Roadmap →
+        </a>
+    </div>
+</div>
+
+<!-- HIDDEN SHARE CARD -->
+<div id="share-card" class="fixed -left-[1000px] top-0 w-[400px] h-[250px] p-8 flex flex-col justify-between overflow-hidden"
+     style="background: #0c0a14; border: 1px solid rgba(108,99,255,0.2);">
+    <div class="absolute top-0 right-0 p-12 text-6xl opacity-10">{{ chapter.badge_emoji }}</div>
+    <div class="relative z-10">
+        <h4 class="font-bold text-xs uppercase tracking-widest mb-1" style="color: #FF6B6B;">NeuroLearn AI Achievement</h4>
+        <h2 class="text-2xl font-bold text-white mb-4">{{ student_name }}</h2>
+        <p class="text-sm" style="color: #9B96B0;">{{ chapter.topic_title }} Mastery</p>
+    </div>
+    <div class="flex justify-between items-end relative z-10">
+        <div>
+            <p class="text-xl font-bold" style="color: #4ECDC4;">{{ progress.quiz_score }}%</p>
+            <p class="text-[8px] uppercase" style="color: #5E5877;">Global Score</p>
+        </div>
+        <div class="text-right">
+            <p class="text-xl font-bold" style="color: #FFB347;">⚡ {{ progress.xp_earned }}</p>
+            <p class="text-[8px] uppercase" style="color: #5E5877;">XP Earned</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.resultData = {
+        score: {{ progress.quiz_score }},
+        xp: {{ progress.xp_earned }},
+        name: "{{ student_name }}",
+        topic: "{{ chapter.topic_title }}",
+        badge: "{{ chapter.badge_emoji }} {{ chapter.badge_name }}",
+        topicId: {{ topic_id|default(0) }}
+    };
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dna_card.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dnaCard = new DNACard();
+        const genBtn = document.getElementById('btn-gen-dna');
+        const dlBtn = document.getElementById('btn-download-dna');
+        const canvas = document.getElementById('dna-card-canvas');
+        const loading = document.getElementById('dna-card-loading');
+
+        genBtn.addEventListener('click', async () => {
+            const topicId = window.resultData?.topicId;
+            if (topicId === null || topicId === undefined) {
+                alert('Topic data not available for DNA card.');
+                return;
+            }
+
+            genBtn.style.display = 'none';
+            loading.classList.remove('hidden');
+
+            const data = await dnaCard.fetchData(topicId);
+            loading.classList.add('hidden');
+
+            if (data) {
+                canvas.style.display = 'block';
+                dnaCard.renderCard(data, canvas);
+                dlBtn.style.display = 'inline-flex';
+            } else {
+                genBtn.style.display = 'inline-flex';
+                alert('Could not generate DNA card. Try again later.');
+            }
+        });
+
+        dlBtn.addEventListener('click', () => {
+            dnaCard.downloadCard();
+        });
+    });
+</script>
+{% endblock %}

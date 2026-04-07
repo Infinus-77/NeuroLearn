@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto pt-8 animate-slide-up" id="main-content">
+    <!-- Top Progress -->
+    <div class="flex items-center justify-between mb-8">
+        <div class="text-xs uppercase font-bold tracking-widest" style="color: #5E5877;">Question <span id="current-q">1</span> of <span id="total-q">10</span></div>
+        <div class="flex-1 h-1 mx-6 rounded-full overflow-hidden" style="background: rgba(255,255,255,0.05);">
+            <div id="quiz-progress" class="h-full transition-all duration-500" style="width: 10%; background: linear-gradient(90deg, #FF6B6B, #FFB347);"></div>
+        </div>
+        <div class="text-sm font-bold" style="color: #FFB347;">⚡ <span id="running-xp">0</span> XP</div>
+    </div>
+
+    <!-- Chapter Reference -->
+    <div class="mb-8">
+        <button id="toggle-ref" class="text-[10px] hover:text-white uppercase font-bold tracking-widest flex items-center gap-2" aria-expanded="false" aria-controls="ref-panel" style="color: #5E5877;">
+            <i class="fas fa-book-open" aria-hidden="true"></i> View Chapter Summary (Costs 20 XP)
+        </button>
+        <div id="ref-panel" class="hidden glass p-4 mt-2 animate-slide-up" role="region" aria-label="Chapter summary" style="border-color: rgba(255,255,255,0.04);">
+            <h3 class="text-xs font-bold mb-2">{{ chapter.title }}</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for concept in chapter.key_concepts %}
+                    <span class="text-[9px] px-2 py-1 rounded" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.04);">{{ concept }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice-First Answer Button -->
+    {% if session.get('learning_profile', {}).get('voice_first_input') %}
+    <button id="voice-answer-btn" class="btn-primary w-full mb-4 py-4" aria-label="Speak your answer aloud" style="min-height:56px;">
+        <i class="fas fa-microphone mr-2" aria-hidden="true"></i> Speak Your Answer
+    </button>
+    {% endif %}
+
+    <!-- Question Card -->
+    <div id="quiz-card" class="glass p-10 relative overflow-hidden group" role="region" aria-label="Quiz question">
+        <div class="absolute top-0 right-0 p-4">
+            <div id="difficulty-badge" class="text-[9px] font-bold uppercase py-1 px-3 rounded-full border" aria-label="Difficulty: Easy"
+                 style="border-color: rgba(78,205,196,0.2); color: #4ECDC4; background: rgba(78,205,196,0.06);">EASY</div>
+        </div>
+        
+        <p id="concept-tag" class="text-[10px] uppercase tracking-widest mb-4" style="color: #5E5877;">Core Synthesis</p>
+        <h2 id="question-text" class="text-2xl font-bold font-heading mb-10 leading-tight">...</h2>
+
+        <div id="options-container" class="grid gap-4 mb-10" role="group" aria-labelledby="question-text">
+            <!-- Options injected here -->
+        </div>
+
+        <div id="explanation-panel" class="hidden p-4 mb-8 animate-slide-up rounded-xl" aria-live="assertive" role="status"
+             style="background: rgba(255,179,71,0.05); border-left: 2px solid #FFB347;">
+            <p class="text-sm italic" id="explanation-text">...</p>
+        </div>
+
+        <div class="flex items-center justify-between pt-8" style="border-top: 1px solid rgba(255,255,255,0.04);">
+            <button id="btn-voice" class="w-12 h-12 rounded-full glass flex items-center justify-center transition-all" 
+                    aria-label="Use voice to answer" style="min-width:44px;min-height:44px; border-color: rgba(78,205,196,0.15); color: #4ECDC4;">
+                <i class="fas fa-microphone" aria-hidden="true"></i>
+            </button>
+            
+            <button id="btn-next" class="btn-primary px-10 py-3 disabled:opacity-50 disabled:grayscale" disabled aria-label="Next question">
+                Next Question <i class="fas fa-chevron-right ml-2 text-xs" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <!-- Timer Circle -->
+        <div class="absolute bottom-8 right-10 w-12 h-12" role="timer" aria-label="Time remaining">
+            <svg class="w-full h-full transform -rotate-90" aria-hidden="true">
+                <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.04)" stroke-width="4" fill="transparent"></circle>
+                <circle id="timer-stroke" cx="24" cy="24" r="20" stroke="#4ECDC4" stroke-width="4" fill="transparent" stroke-dasharray="125.6" stroke-dashoffset="0" class="transition-all duration-1000 linear"></circle>
+            </svg>
+            <span id="timer-text" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold" aria-live="off">30s</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.chapterId = "{{ chapter.chapter_id }}";
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endblock %}
